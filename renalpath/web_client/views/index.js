@@ -1,5 +1,7 @@
 import AnnotationPopover from './AnnotationPopover';
+import MetadataPlot from './MetadataPlot';
 
 export {
-    AnnotationPopover
+    AnnotationPopover,
+    MetadataPlot
 };
