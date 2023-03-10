@@ -12,11 +12,17 @@ wrap(AnnotationPopover, '_elementAdditionalValues', function (_elementAdditional
         return element._additionalValues;
     }
     element._additionalValues = null;
-    const attrib = annotation.get('annotation').attributes;
-    if (!attrib || !attrib.Main_Cell_Types) {
-        return results;
+    let topkey = 'Main_Cell_Types';
+    let ctypes;
+    if ((element.get('user') || {})[topkey]) {
+        ctypes = element.get('user')[topkey];
+    } else {
+        const attrib = annotation.get('annotation').attributes;
+        if (!attrib || !attrib[topkey]) {
+            return results;
+        }
+        ctypes = attrib[topkey][element.id];
     }
-    const ctypes = attrib.Main_Cell_Types[element.id];
     if (ctypes) {
         let values = Object.keys(ctypes).filter((key) => ctypes[key]).sort((a, b) => ctypes[b] - ctypes[a]).map((key) => `${key}: ${ctypes[key].toFixed(3)}`);
         if (values.length) {
