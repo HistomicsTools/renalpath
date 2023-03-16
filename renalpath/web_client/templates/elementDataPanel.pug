@@ -1,0 +1,44 @@
+.s-panel-title-container
+  span.s-panel-title.h-panel-title
+    | Element Data
+  span.s-panel-controls
+    if collapsed
+      i.icon-down-open
+    else
+      i.icon-up-open
+    if removeButton
+      i.icon-cancel.s-remove-panel(data-target=`#${id}`)
+
+- var attrs = {}
+if !collapsed
+  - attrs.class = 'in'
+.s-panel-content.collapse&attributes(attrs)
+  #element-count
+    | Number of selected elements:
+    |
+    = count
+    -
+      let ctypes = average.Main_Cell_Types || {};
+      let states = average.Cell_States || {};
+      let snames = ['reference', 'altered', 'transitioning', 'cycling', 'degenerative'];
+  #cell-types
+    b Cell Types
+    .h-metadata-plot-area
+    table
+      tr
+        th Cell Type
+        th Proportion
+        th States
+      for key in Object.keys(ctypes).filter((key) => ctypes[key]).sort((a, b) => ctypes[b] - ctypes[a])
+        - let stotal = snames.reduce((acc, skey) => acc + ((states[key] || {})[skey] || 0), 0);
+        - console.log(states[key], stotal);
+        tr
+          td
+            = key
+          td
+            = ctypes[key].toFixed(3)
+          td
+            if stotal
+              .state-bar
+                for skey in snames
+                  .state-bar-block(class="state-bar-mode-" + skey, style="width:" + (((states[key] || {})[skey] || 0) * 100 / stotal) + "%", title=skey + " - " + ((states[key] || {})[skey] || 0).toFixed(3))
