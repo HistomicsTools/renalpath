@@ -61,56 +61,75 @@ const ElementDataPanel = Panel.extend({
     _update: function () {
         this.render();
     },
-    _averageElementsRecurse: function (props, avg, uni, sum, count, first) {
+    _averageElementsRecurse: function (props, count, record, first) {
+        if (_.isArray(props)) {
+            props.forEach((entry) => {
+                record = this._averageElementsRecurse(entry, props.length, record);
+            });
+            return record;
+        }
+        if (!record) {
+            record = {count: count, average: {}, uniform: {}, sum: {}, min: {}, max: {}};
+            first = true;
+        }
         if (props === null || props === undefined) {
-            return;
+            return record;
         }
         Object.entries(props).forEach(([key, value]) => {
             if (value === null || value === undefined) {
                 return;
             }
             if (!value.substr && Object.keys(value).length) {
-                let keyavg = avg[key] || {};
-                let keyuni = uni[key] || {};
-                let keysum = sum[key] || {};
-                this._averageElementsRecurse(value, keyavg, keyuni, keysum, count, first);
-                if (Object.keys(keyavg).length) {
-                    avg[key] = keyavg;
+                const keyrec = {
+                    average: record.average[key] || {},
+                    uniform: record.uniform[key] || {},
+                    sum: record.sum[key] || {},
+                    min: record.sum[key] || {},
+                    max: record.sum[key] || {}
+                };
+                this._averageElementsRecurse(value, count, keyrec, first);
+                if (Object.keys(keyrec.average).length) {
+                    record.average[key] = keyrec.average;
                 }
-                if (Object.keys(keyuni).length && first) {
-                    uni[key] = keyuni;
+                if (Object.keys(keyrec.uniform).length && first) {
+                    record.uniform[key] = keyrec.uniform;
                 }
-                if (Object.keys(keysum).length) {
-                    sum[key] = keysum;
+                if (Object.keys(keyrec.sum).length) {
+                    record.sum[key] = keyrec.sum;
+                }
+                if (Object.keys(keyrec.min).length) {
+                    record.min[key] = keyrec.min;
+                }
+                if (Object.keys(keyrec.max).length) {
+                    record.max[key] = keyrec.max;
                 }
             } else {
-                if (!first && uni[key] !== value) {
-                    delete uni[key];
+                if (!first && record.uniform[key] !== value) {
+                    delete record.uniform[key];
                 }
                 if (_.isFinite(value) && +value) {
-                    avg[key] = (avg[key] || 0) + (+value) / count;
-                    sum[key] = (sum[key] || 0) + (+value);
+                    record.average[key] = (record.average[key] || 0) + (+value) / count;
+                    record.sum[key] = (record.sum[key] || 0) + (+value);
                     if (first) {
-                        uni[key] = +value;
+                        record.uniform[key] = +value;
+                        record.min[key] = record.max[key] = +value;
                     }
+                    record.min[key] = Math.min(record.min[key], +value);
+                    record.max[key] = Math.max(record.max[key], +value);
                 } else if (value.substr) {
                     if (first) {
-                        uni[key] = value;
+                        record.uniform[key] = value;
                     }
                 }
             }
         });
+        return record;
     },
     _averageElements: function (elements) {
         if (!elements || !elements.length) {
             return;
         }
-        const count = elements.length;
-        const result = {average: {}, uniform: {}, sum: {}, count: count};
-        elements.models.forEach((e, idx) => {
-            this._averageElementsRecurse(e.get('user'), result.average, result.uniform, result.sum, count, !idx);
-        });
-        return result;
+        return this._averageElementsRecurse(elements.models.map((e) => e.get('user')));
     },
     getPlotData: function (plotConfig, average) {
         const ctypes = average.Main_Cell_Types;
