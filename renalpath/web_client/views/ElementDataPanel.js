@@ -36,8 +36,9 @@ const ElementDataPanel = Panel.extend({
                     id: 'elementdata-panel',
                     elements: elements,
                     average: average.average,
-                    uniform: average.uniform,
-                    count: elements.length
+                    record: average,
+                    count: elements.length,
+                    formatNumber: this._formatNumber
                 }));
                 this.$el.removeClass('hidden');
                 this.lastPlotData = this.getPlotData(this.plotConfig, average.average);
@@ -60,6 +61,10 @@ const ElementDataPanel = Panel.extend({
     },
     _update: function () {
         this.render();
+    },
+    _formatNumber: function (val) {
+        let digits = Math.min(3, Math.max(0, 3 - Math.floor(Math.log10(Math.abs(val)))));
+        return val.toFixed(digits);
     },
     _averageElementsRecurse: function (props, count, record, first) {
         if (_.isArray(props)) {
@@ -107,15 +112,14 @@ const ElementDataPanel = Panel.extend({
                 if (!first && record.uniform[key] !== value) {
                     delete record.uniform[key];
                 }
-                if (_.isFinite(value) && +value) {
+                if (_.isFinite(value) && +value && value.toFixed) {
                     record.average[key] = (record.average[key] || 0) + (+value) / count;
                     record.sum[key] = (record.sum[key] || 0) + (+value);
                     if (first) {
                         record.uniform[key] = +value;
-                        record.min[key] = record.max[key] = +value;
                     }
-                    record.min[key] = Math.min(record.min[key], +value);
-                    record.max[key] = Math.max(record.max[key], +value);
+                    record.min[key] = Math.min(record.min[key] === undefined ? +value : record.min[key], +value);
+                    record.max[key] = Math.max(record.max[key] === undefined ? +value : record.max[key], +value);
                 } else if (value.substr) {
                     if (first) {
                         record.uniform[key] = value;

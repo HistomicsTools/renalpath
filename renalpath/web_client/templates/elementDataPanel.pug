@@ -26,12 +26,11 @@ if !collapsed
     .h-metadata-plot-area
     table
       tr
-        th Cell Type
+        th Type
         th Proportion
         th States
-      for key in Object.keys(ctypes).filter((key) => ctypes[key]).sort((a, b) => ctypes[b] - ctypes[a])
+      for key in Object.keys(ctypes).filter((key) => ctypes[key] && ctypes[key] >= 0.0005).sort((a, b) => ctypes[b] - ctypes[a])
         - let stotal = snames.reduce((acc, skey) => acc + ((states[key] || {})[skey] || 0), 0);
-        - console.log(states[key], stotal);
         tr
           td
             = key
@@ -42,3 +41,38 @@ if !collapsed
               .state-bar
                 for skey in snames
                   .state-bar-block(class="state-bar-mode-" + skey, style="width:" + (((states[key] || {})[skey] || 0) * 100 / stotal) + "%", title=skey + " - " + ((states[key] || {})[skey] || 0).toFixed(3))
+  - let allKeys = Object.keys(record.uniform).filter((key) => record.uniform[key] && (record.uniform[key].substr || record.uniform[key].toFixed)).sort()
+  - let keys = [...new Set(Object.keys(average).filter((key) => average[key] && average[key].toFixed).concat(allKeys))].sort();
+  - let anyAll = allKeys.length > 0
+  - let anyAvg = count > 1 && keys.length > allKeys.length
+  if keys.length
+    #element-properties
+      table
+        tr
+          th
+            | Properties
+          if anyAll
+            th
+              = count === 1 ? "Value" : "All"
+          if anyAvg
+            th Min
+            th Max
+            th Avg
+        for key in keys
+          tr
+            td
+              = key
+            if anyAll
+              td
+                if record.uniform[key]
+                  = record.uniform[key].toFixed ? formatNumber(record.uniform[key]) : record.uniform[key]
+            if anyAvg
+              td
+                if !record.uniform[key]
+                  = formatNumber(record.min[key])
+              td
+                if !record.uniform[key]
+                  = formatNumber(record.max[key])
+              td
+                if !record.uniform[key]
+                  = formatNumber(average[key])
