@@ -26,7 +26,7 @@ if !collapsed
     .h-metadata-plot-area
     table
       tr
-        th Type
+        th Cell Type
         th Proportion
         th States
       for key in Object.keys(ctypes).filter((key) => ctypes[key] && ctypes[key] >= 0.0005).sort((a, b) => ctypes[b] - ctypes[a])
@@ -50,7 +50,7 @@ if !collapsed
       table
         tr
           th
-            | Properties
+            | Morphometric Properties
           if anyAll
             th
               = count === 1 ? "Value" : "All"
