@@ -10,19 +10,23 @@ wrap(MetadataPlot, 'onHover', function (onHover, event) {
     let results = onHover.apply(this, _.rest(arguments, 1));
     if (event && event.points && event.points.length >= 1 && event.points[0].pointIndex !== undefined) {
         const idx = event.points[0].pointIndex;
-        const roots = this.lastPlotData.data[idx]._roots;
         let image;
-        Object.entries(roots).forEach(([key, value]) => {
-            if (!image && value.image_id && value.Min_x_coord !== undefined && value.Max_x_coord !== undefined && value.Min_y_coord !== undefined && value.Min_y_coord !== undefined) {
-                image = {
-                    id: value.image_id,
-                    left: value.Min_x_coord,
-                    top: value.Min_y_coord,
-                    right: value.Max_x_coord,
-                    bottom: value.Max_y_coord
-                };
-            }
-        });
+        if (this.lastPlotData.data[idx]._roots) {
+            const roots = this.lastPlotData.data[idx]._roots;
+            Object.entries(roots).forEach(([key, value]) => {
+                if (!image && value.image_id && value.Min_x_coord !== undefined && value.Max_x_coord !== undefined && value.Min_y_coord !== undefined && value.Min_y_coord !== undefined) {
+                    image = {
+                        id: value.image_id,
+                        left: value.Min_x_coord,
+                        top: value.Min_y_coord,
+                        right: value.Max_x_coord,
+                        bottom: value.Max_y_coord
+                    };
+                }
+            });
+        } else {
+            image = this.lastPlotData.data[idx].image;
+        }
         if (image && (!this.lastPlotData._images || !this.lastPlotData._images[image.id])) {
             this.lastPlotData._images = this.lastPlotData._images || {};
             if (!this.lastPlotData._images[image.id]) {
@@ -56,20 +60,33 @@ wrap(MetadataPlot, 'onHover', function (onHover, event) {
     return results;
 });
 
-wrap(MetadataPlot, 'adjustHoverText', function (adjustHoverText, d, parts) {
-    const roots = d._roots;
+wrap(MetadataPlot, 'adjustHoverText', function (adjustHoverText, d, parts, plotData) {
     let image;
-    Object.entries(roots).forEach(([key, value]) => {
-        if (!image && value.image_id && value.Min_x_coord !== undefined && value.Max_x_coord !== undefined && value.Min_y_coord !== undefined && value.Min_y_coord !== undefined) {
+    if (plotData === undefined) {
+        const roots = d._roots;
+        Object.entries(roots).forEach(([key, value]) => {
+            if (!image && value.image_id && value.Min_x_coord !== undefined && value.Max_x_coord !== undefined && value.Min_y_coord !== undefined && value.Min_y_coord !== undefined) {
+                image = {
+                    id: value.image_id,
+                    left: value.Min_x_coord,
+                    top: value.Min_y_coord,
+                    right: value.Max_x_coord,
+                    bottom: value.Max_y_coord
+                };
+            }
+        });
+    } else {
+        if (plotData.colDict['_0_item.name'] && plotData.colDict['_bbox.x0'] && plotData.colDict['_bbox.x1'] && plotData.colDict['_bbox.y0'] && plotData.colDict['_bbox.y1'] && d[plotData.colDict['_0_item.name'].index] !== undefined && d[plotData.colDict['_bbox.x0'].index] !== undefined && d[plotData.colDict['_bbox.y0'].index] !== undefined && d[plotData.colDict['_bbox.x0'].index] !== undefined && d[plotData.colDict['_bbox.y1'].index] !== undefined) {
             image = {
-                id: value.image_id,
-                left: value.Min_x_coord,
-                top: value.Min_y_coord,
-                right: value.Max_x_coord,
-                bottom: value.Max_y_coord
+                id: d[plotData.colDict['_0_item.name'].index],
+                left: d[plotData.colDict['_bbox.x0'].index],
+                top: d[plotData.colDict['_bbox.y0'].index],
+                right: d[plotData.colDict['_bbox.x1'].index],
+                bottom: d[plotData.colDict['_bbox.y1'].index]
             };
+            d.image = image;
         }
-    });
+    }
     if (image) {
         for (let i = 0; i < 6; i += 1) {
             parts.push('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
