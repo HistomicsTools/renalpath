@@ -34,28 +34,30 @@ wrap(MetadataPlot, 'onHover', function (onHover, event) {
                     url: 'item', data: {folderId: this.parentFolderId, text: `"${image.id}"`}, error: null});
             }
         }
-        this._lastThumbnailRegionPromise = this.lastPlotData._images[image.id];
-        this._lastThumbnailRegionPromise.done((items) => {
-            if (this.lastPlotData._images[image.id] !== this._lastThumbnailRegionPromise || !items || items.length !== 1 || $('svg g.hoverlayer').length === 0) {
-                return;
-            }
-            const regionUrl = `api/v1/item/${items[0]._id}/tiles/region?width=100&height=100&left=${image.left}&top=${image.top}&right=${image.right}&bottom=${image.bottom}`;
-            let x = parseFloat($('svg g.hoverlayer g.hovertext text[x]').attr('x'));
-            let y = parseFloat($('svg g.hoverlayer g.hovertext text[y]').attr('y'));
-            x = x === 0 ? -50 : x < 0 ? x - 100 : x;
-            let d = $('svg g.hoverlayer g.hovertext path[d]').attr('d');
-            if (d && (d.split('L6,').length >= 2 || d.split('L-6,').length >= 2)) {
-                let y2 = parseFloat(d.split('v')[2]);
-                y += Math.abs(y2) - 100 - 13;
-            } else if (d && d.split('v').length === 2) {
-                let y2 = parseFloat(d.split('v')[1]);
-                y += Math.abs(y2) - 100 - 13;
-            } else {
-                y = -3;
-            }
-            $('svg g.hoverlayer g.hovertext image.hoverthumbnail').remove();
-            $('svg g.hoverlayer g.hovertext').html($('svg g.hoverlayer g.hovertext').html() + `<image class="hoverthumbnail" href="${regionUrl}" x="${x}px" y="${y}px" width="100px" height="100px"/>`);
-        });
+        if (image) {
+            this._lastThumbnailRegionPromise = this.lastPlotData._images[image.id];
+            this._lastThumbnailRegionPromise.done((items) => {
+                if (this.lastPlotData._images[image.id] !== this._lastThumbnailRegionPromise || !items || items.length !== 1 || $('svg g.hoverlayer').length === 0) {
+                    return;
+                }
+                const regionUrl = `api/v1/item/${items[0]._id}/tiles/region?width=100&height=100&left=${image.left}&top=${image.top}&right=${image.right}&bottom=${image.bottom}`;
+                let x = parseFloat($('svg g.hoverlayer g.hovertext text[x]').attr('x'));
+                let y = parseFloat($('svg g.hoverlayer g.hovertext text[y]').attr('y'));
+                x = x === 0 ? -50 : x < 0 ? x - 100 : x;
+                let d = $('svg g.hoverlayer g.hovertext path[d]').attr('d');
+                if (d && (d.split('L6,').length >= 2 || d.split('L-6,').length >= 2)) {
+                    let y2 = parseFloat(d.split('v')[2]);
+                    y += Math.abs(y2) - 100 - 13;
+                } else if (d && d.split('v').length === 2) {
+                    let y2 = parseFloat(d.split('v')[1]);
+                    y += Math.abs(y2) - 100 - 13;
+                } else {
+                    y = -3;
+                }
+                $('svg g.hoverlayer g.hovertext image.hoverthumbnail').remove();
+                $('svg g.hoverlayer g.hovertext').html($('svg g.hoverlayer g.hovertext').html() + `<image class="hoverthumbnail" href="${regionUrl}" x="${x}px" y="${y}px" width="100px" height="100px"/>`);
+            });
+        }
     }
     return results;
 });
