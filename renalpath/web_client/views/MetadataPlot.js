@@ -32,7 +32,7 @@ wrap(MetadataPlot, 'onHover', function (onHover, event) {
                 this.lastPlotData._images = this.lastPlotData._images || {};
                 if (!this.lastPlotData._images[image.id]) {
                     this.lastPlotData._images[image.id] = restRequest({
-                        url: 'item', data: {folderId: this.parentFolderId, text: `"${image.id}"`}, error: null});
+                        url: 'item', data: { folderId: this.parentFolderId, text: `"${image.id}"` }, error: null });
                 }
             }
             if (image) {

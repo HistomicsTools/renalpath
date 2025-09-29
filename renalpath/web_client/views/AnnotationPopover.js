@@ -2,6 +2,8 @@ import { wrap } from '@girder/core/utilities/PluginUtils';
 
 import AnnotationPopover from '@girder/histomicsui/views/popover/AnnotationPopover';
 
+import { convertCellTypes } from './celltypes.js';
+
 /**
  * This shows cell types based on very specific metadata that might be present
  * on an annotation.
@@ -15,6 +17,9 @@ wrap(AnnotationPopover, '_elementAdditionalValues', function (_elementAdditional
     let ctypes;
     const topkey = 'Main_Cell_Types';
     const user = element.get('user') || {};
+    if (!user[topkey]) {
+        convertCellTypes(user);
+    }
     if (user[topkey]) {
         ctypes = element.get('user')[topkey];
     } else {

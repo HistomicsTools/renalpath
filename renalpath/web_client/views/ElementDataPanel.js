@@ -7,6 +7,7 @@ import Panel from '@girder/slicer_cli_web/views/Panel';
 import elementDataPanel from '../templates/elementDataPanel.pug';
 
 import '../stylesheets/elementDataPanel.styl';
+import { convertCellTypes } from './celltypes.js';
 
 const ElementDataPanel = Panel.extend({
     initialize(settings) {
@@ -19,6 +20,9 @@ const ElementDataPanel = Panel.extend({
             this._bound = true;
         }
         const elements = this.parentView.selectedElements;
+        elements.forEach((el) => {
+            convertCellTypes(el.get['user'] || {});
+        });
         const average = this._averageElements(elements);
         if (!average || !((average || {}).average || {}).Main_Cell_Types) {
             this.$el.addClass('hidden');
@@ -44,7 +48,7 @@ const ElementDataPanel = Panel.extend({
                 this.lastPlotData = this.getPlotData(this.plotConfig, average.average);
                 const elem = this.$el.find('.h-metadata-plot-area');
                 let plotOptions = {
-                    margin: {t: 0, l: 40, r: 0, b: 20},
+                    margin: { t: 0, l: 40, r: 0, b: 20 },
                     hovermode: 'closest',
                     paper_bgcolor: 'transparent',
                     plot_bgcolor: 'transparent',
@@ -74,7 +78,7 @@ const ElementDataPanel = Panel.extend({
             return record;
         }
         if (!record) {
-            record = {count: count, average: {}, uniform: {}, sum: {}, min: {}, max: {}};
+            record = { count: count, average: {}, uniform: {}, sum: {}, min: {}, max: {} };
             first = true;
         }
         if (props === null || props === undefined) {
