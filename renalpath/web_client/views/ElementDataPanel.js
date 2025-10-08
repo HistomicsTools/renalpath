@@ -68,6 +68,9 @@ const ElementDataPanel = Panel.extend({
     },
     _formatNumber: function (val) {
         let digits = Math.min(3, Math.max(0, 3 - Math.floor(Math.log10(Math.abs(val)))));
+        if (Number.isInteger(val)) {
+            digits = 0;
+        }
         return val.toFixed(digits);
     },
     _averageElementsRecurse: function (props, count, record, first) {
