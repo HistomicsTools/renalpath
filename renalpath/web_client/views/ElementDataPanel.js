@@ -30,7 +30,7 @@ const ElementDataPanel = Panel.extend({
             $.when(
                 !window.Plotly
                     ? $.ajax({ // like $.getScript, but allow caching
-                        url: 'https://cdn.plot.ly/plotly-latest.min.js',
+                        url: 'https://unpkg.com/plotly.js-dist@latest/plotly.min.js',
                         dataType: 'script',
                         cache: true
                     })

@@ -51,7 +51,7 @@ if !collapsed
         tr
           th
             | Morphometric Properties
-          if anyAll
+          if anyAll && !anyAvg
             th
               = count === 1 ? "Value" : "All"
           if anyAvg
@@ -62,17 +62,21 @@ if !collapsed
           tr
             td
               = key
-            if anyAll
+            if anyAll && !anyAvg
               td
                 if record.uniform[key]
                   = record.uniform[key].toFixed ? formatNumber(record.uniform[key]) : record.uniform[key]
             if anyAvg
-              td
-                if !record.uniform[key]
-                  = formatNumber(record.min[key])
-              td
-                if !record.uniform[key]
-                  = formatNumber(record.max[key])
-              td
-                if !record.uniform[key]
-                  = formatNumber(average[key])
+              if record.uniform[key]
+                td(colspan="3")
+                  = record.uniform[key].toFixed ? formatNumber(record.uniform[key]) : record.uniform[key]
+              else
+                td
+                  if !record.uniform[key]
+                    = formatNumber(record.min[key])
+                td
+                  if !record.uniform[key]
+                    = formatNumber(record.max[key])
+                td
+                  if !record.uniform[key]
+                    = formatNumber(average[key])
