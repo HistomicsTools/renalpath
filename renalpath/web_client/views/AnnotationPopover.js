@@ -46,6 +46,8 @@ wrap(AnnotationPopover, '_elementAdditionalValues', function (_elementAdditional
             let subdiv = '<div style="break-inside: avoid; overflow: hidden">';
             results += '<div style="column-count: 2; column-gap=10px;">' + subdiv + values.join('</div>' + subdiv) + '</div></div>';
         }
+    } else {
+        return _elementAdditionalValues(element, annotation);
     }
     element._additionalValues = results;
     return results;
