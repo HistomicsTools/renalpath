@@ -24,7 +24,7 @@ const ElementDataPanel = Panel.extend({
             convertCellTypes(el.get['user'] || {});
         });
         const average = this._averageElements(elements);
-        if (!average || !((average || {}).average || {}).Main_Cell_Types) {
+        if (!elements.length) {
             this.$el.addClass('hidden');
         } else {
             $.when(
@@ -46,15 +46,18 @@ const ElementDataPanel = Panel.extend({
                 }));
                 this.$el.removeClass('hidden');
                 this.lastPlotData = this.getPlotData(this.plotConfig, average.average);
+                this.$el.find('#cell-types').toggleClass('hidden', !this.lastPlotData);
                 const elem = this.$el.find('.h-metadata-plot-area');
-                let plotOptions = {
-                    margin: { t: 0, l: 40, r: 0, b: 20 },
-                    hovermode: 'closest',
-                    paper_bgcolor: 'transparent',
-                    plot_bgcolor: 'transparent',
-                    height: 200
-                };
-                window.Plotly.newPlot(elem[0], this.lastPlotData, plotOptions);
+                if (this.lastPlotData) {
+                    let plotOptions = {
+                        margin: { t: 0, l: 40, r: 0, b: 20 },
+                        hovermode: 'closest',
+                        paper_bgcolor: 'transparent',
+                        plot_bgcolor: 'transparent',
+                        height: 200
+                    };
+                    window.Plotly.newPlot(elem[0], this.lastPlotData, plotOptions);
+                }
             });
         }
     },
@@ -143,6 +146,9 @@ const ElementDataPanel = Panel.extend({
         return this._averageElementsRecurse(elements.models.map((e) => e.get('user')));
     },
     getPlotData: function (plotConfig, average) {
+        if (!average || !average.Main_Cell_Types) {
+            return;
+        }
         const ctypes = average.Main_Cell_Types;
         const keys = Object.keys(ctypes).filter((key) => ctypes[key]).sort((a, b) => ctypes[b] - ctypes[a]);
         var data = [{
