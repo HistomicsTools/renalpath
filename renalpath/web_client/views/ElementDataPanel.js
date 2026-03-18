@@ -21,7 +21,7 @@ const ElementDataPanel = Panel.extend({
         }
         const elements = this.parentView.selectedElements;
         elements.forEach((el) => {
-            convertCellTypes(el.get['user'] || {});
+            convertCellTypes(el.get('user') || {});
         });
         const average = this._averageElements(elements);
         if (!elements.length) {
