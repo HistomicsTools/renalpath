@@ -21,6 +21,9 @@ if !collapsed
       let ctypes = average.Main_Cell_Types || {};
       let states = average.Cell_States || {};
       let snames = ['reference', 'altered', 'transitioning', 'cycling', 'degenerative'];
+      let ckeys = Object.keys(ctypes).filter((key) => ctypes[key] && ctypes[key] >= 0.0005).sort((a, b) => ctypes[b] - ctypes[a]);
+      let stateTotal = (key) => snames.reduce((acc, skey) => acc + ((states[key] || {})[skey] || 0), 0);
+      let anyStates = ckeys.some((key) => stateTotal(key));
   #cell-types
     b Cell Types
     .h-metadata-plot-area
@@ -28,19 +31,21 @@ if !collapsed
       tr
         th Cell Type
         th Proportion
-        th States
-      for key in Object.keys(ctypes).filter((key) => ctypes[key] && ctypes[key] >= 0.0005).sort((a, b) => ctypes[b] - ctypes[a])
-        - let stotal = snames.reduce((acc, skey) => acc + ((states[key] || {})[skey] || 0), 0);
+        if anyStates
+          th States
+      for key in ckeys
+        - let stotal = stateTotal(key);
         tr
           td
             = key
           td
             = ctypes[key].toFixed(3)
-          td
-            if stotal
-              .state-bar
-                for skey in snames
-                  .state-bar-block(class="state-bar-mode-" + skey, style="width:" + (((states[key] || {})[skey] || 0) * 100 / stotal) + "%", title=skey + " - " + ((states[key] || {})[skey] || 0).toFixed(3))
+          if anyStates
+            td
+              if stotal
+                .state-bar
+                  for skey in snames
+                    .state-bar-block(class="state-bar-mode-" + skey, style="width:" + (((states[key] || {})[skey] || 0) * 100 / stotal) + "%", title=skey + " - " + ((states[key] || {})[skey] || 0).toFixed(3))
   - let allKeys = Object.keys(record.uniform).filter((key) => record.uniform[key] && (record.uniform[key].substr || record.uniform[key].toFixed)).sort()
   - let keys = [...new Set(Object.keys(average).filter((key) => average[key] && average[key].toFixed).concat(allKeys))].sort();
   - let anyAll = allKeys.length > 0

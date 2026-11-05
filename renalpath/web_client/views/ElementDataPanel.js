@@ -49,7 +49,7 @@ const ElementDataPanel = Panel.extend({
                 this.$el.find('#cell-types').toggleClass('hidden', !this.lastPlotData);
                 const elem = this.$el.find('.h-metadata-plot-area');
                 if (this.lastPlotData) {
-                    let plotOptions = {
+                    const plotOptions = {
                         margin: { t: 0, l: 40, r: 0, b: 20 },
                         hovermode: 'closest',
                         paper_bgcolor: 'transparent',

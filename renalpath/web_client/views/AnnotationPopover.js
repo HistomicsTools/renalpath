@@ -32,12 +32,12 @@ wrap(AnnotationPopover, '_elementAdditionalValues', function (_elementAdditional
     }
     let values = [];
     if (ctypes) {
-        values = Object.keys(ctypes).filter((key) => ctypes[key] && ctypes[key] >= 0.0005).sort((a, b) => ctypes[b] - ctypes[a]).map((key) => ({key: key, value: `${ctypes[key].toFixed(Number.isInteger(ctypes[key]) ? 0 : 3)}`, cat: topkey.replace(/_/g, ' ')}));
+        values = Object.keys(ctypes).filter((key) => ctypes[key] && ctypes[key] >= 0.0005).sort((a, b) => ctypes[b] - ctypes[a]).map((key) => ({ key: key, value: `${ctypes[key].toFixed(Number.isInteger(ctypes[key]) ? 0 : 3)}`, cat: topkey.replace(/_/g, ' ') }));
     }
     Object.keys(user).filter((key) => user[key].substr || (user[key].toFixed && Math.abs(user[key]) >= 0.0005)).sort().forEach((key) => {
         const val = user[key].toFixed ? user[key].toFixed(Number.isInteger(user[key]) ? 0 : 3) : ('' + user[key]);
         if (val) {
-            values.push({key, value: val, cat: 'Properties'});
+            values.push({ key, value: val, cat: 'Properties' });
         }
     });
     if (values.length) {
@@ -60,7 +60,7 @@ wrap(AnnotationPopover, '_elementAdditionalValues', function (_elementAdditional
         if ($('table tr', elem).length > 30) {
             const rows = $('table tr', elem);
             const half = Math.ceil(rows.length / 2);
-            let newelem = $('<table></table>');
+            const newelem = $('<table></table>');
             for (let i = 0; i < half; i++) {
                 newelem.append($('<tr></tr>')
                     .append($(rows[i]).html())

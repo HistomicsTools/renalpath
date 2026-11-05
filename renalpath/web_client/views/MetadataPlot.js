@@ -7,7 +7,7 @@ import { wrap } from '@girder/core/utilities/PluginUtils';
 import MetadataPlot from '@girder/histomicsui/panels/MetadataPlot';
 
 wrap(MetadataPlot, 'onHover', function (onHover, event) {
-    let results = onHover.apply(this, _.rest(arguments, 1));
+    const results = onHover.apply(this, _.rest(arguments, 1));
     try {
         if (event && event.points && event.points.length >= 1 && event.points[0].pointIndex !== undefined) {
             const idx = event.points[0].pointIndex;
@@ -31,8 +31,7 @@ wrap(MetadataPlot, 'onHover', function (onHover, event) {
             if (image && (!this.lastPlotData._images || !this.lastPlotData._images[image.id])) {
                 this.lastPlotData._images = this.lastPlotData._images || {};
                 if (!this.lastPlotData._images[image.id]) {
-                    this.lastPlotData._images[image.id] = restRequest({
-                        url: 'item', data: { folderId: this.parentFolderId, text: `"${image.id}"` }, error: null });
+                    this.lastPlotData._images[image.id] = restRequest({ url: 'item', data: { folderId: this.parentFolderId, text: `"${image.id}"` }, error: null });
                 }
             }
             if (image) {
@@ -45,12 +44,12 @@ wrap(MetadataPlot, 'onHover', function (onHover, event) {
                     let x = parseFloat($('svg g.hoverlayer g.hovertext text[x]').attr('x'));
                     let y = parseFloat($('svg g.hoverlayer g.hovertext text[y]').attr('y'));
                     x = x === 0 ? -50 : x < 0 ? x - 100 : x;
-                    let d = $('svg g.hoverlayer g.hovertext path[d]').attr('d');
+                    const d = $('svg g.hoverlayer g.hovertext path[d]').attr('d');
                     if (d && (d.split('L6,').length >= 2 || d.split('L-6,').length >= 2)) {
-                        let y2 = parseFloat(d.split('v')[2]);
+                        const y2 = parseFloat(d.split('v')[2]);
                         y += Math.abs(y2) - 100 - 13;
                     } else if (d && d.split('v').length === 2) {
-                        let y2 = parseFloat(d.split('v')[1]);
+                        const y2 = parseFloat(d.split('v')[1]);
                         y += Math.abs(y2) - 100 - 13;
                     } else {
                         y = -3;
