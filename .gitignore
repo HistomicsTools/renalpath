@@ -48,3 +48,7 @@ coverage.xml
 .venv
 venv/
 ENV/
+
+# node
+node_modules/
+.eslintcache

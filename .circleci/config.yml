@@ -1,29 +1,123 @@
----
 version: 2.1
-jobs:
-  test:
+executors:
+  toxandnode:
+    working_directory: ~/project
     docker:
-      - image: girder/girder_test:latest
+      - image: girder/tox-and-node
       - image: mongo:4.4
         command: bash -c "mkdir /dev/shm/mongo && mongod --nojournal --dbpath=/dev/shm/mongo --noauth --bind_ip_all"
+    resource_class: large
+commands:
+  tox:
+    description: "Run tox"
+    parameters:
+      env:
+        type: string
+    steps:
+      - run:
+          name: Run tests via tox
+          # Piping through cat does less buffering of the output but can
+          # consume the exit code
+          command: PYTEST_ADDOPTS="--reruns=3" PYTEST_NUMPROCESSES=2 tox -e << parameters.env >> | cat; test ${PIPESTATUS[0]} -eq 0
 
+jobs:
+  py310:
+    executor: toxandnode
     steps:
       - checkout
-      - run:
-          name: Run server tests
-          command: tox
-      - run:
-          name: Run web tests
-          command: |
-            npm install
-            npm run lint
-          working_directory: renalpath/web_client
+      - tox:
+          env: py310
+  py311:
+    executor: toxandnode
+    steps:
+      - checkout
+      - tox:
+          env: py311
+  py312:
+    executor: toxandnode
+    steps:
+      - checkout
+      - tox:
+          env: py312
+  py313:
+    executor: toxandnode
+    steps:
+      - checkout
+      - tox:
+          env: py313
+  py314:
+    executor: toxandnode
+    steps:
+      - checkout
+      - tox:
+          env: py314
+  py315:
+    executor: toxandnode
+    steps:
+      - checkout
+      - tox:
+          env: py315
+  lint:
+    executor: toxandnode
+    steps:
+      - checkout
+      - tox:
+          env: lint,lintclient
+  release:
+    docker:
+      - image: girder/tox-and-node
+    steps:
+      - checkout
+      - deploy:
+          name: Release via tox
+          command: tox -e release | cat; test ${PIPESTATUS[0]} -eq 0
 
 workflows:
   version: 2
   ci:
     jobs:
-      - test
+      - py310:
+          filters:
+            tags:
+              only: /^v.*/
+      - py311:
+          filters:
+            tags:
+              only: /^v.*/
+      - py312:
+          filters:
+            tags:
+              only: /^v.*/
+      - py313:
+          filters:
+            tags:
+              only: /^v.*/
+      - py314:
+          filters:
+            tags:
+              only: /^v.*/
+      - py315:
+          filters:
+            tags:
+              only: /^v.*/
+      - lint:
+          filters:
+            tags:
+              only: /^v.*/
+      - release:
+          requires:
+            - py310
+            - py311
+            - py312
+            - py313
+            - py314
+            - py315
+            - lint
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: main
   nightly:
     triggers:
       - schedule:
@@ -31,6 +125,8 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
-      - test
+      - py310
+      - py315
+      - lint

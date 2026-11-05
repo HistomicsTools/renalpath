@@ -17,7 +17,7 @@ def prerelease_local_scheme(version):
     """
     from setuptools_scm.version import get_local_node_and_date
 
-    if os.getenv('CIRCLE_BRANCH') in ('master', ):
+    if os.getenv('CIRCLE_BRANCH') in ('master', 'main'):
         return ''
     else:
         return get_local_node_and_date(version)
@@ -36,15 +36,16 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
+        'Programming Language :: Python :: 3.15',
     ],
     install_requires=[
-        'histomicsui',
+        'girder<5',
+        'histomicsui<2',
     ],
     license='Apache Software License 2.0',
     long_description=readme,
@@ -54,6 +55,7 @@ setup(
     packages=find_packages(exclude=['test', 'test.*']),
     url='https://github.com/girder/renalpath',
     zip_safe=False,
+    python_requires='>=3.10',
     entry_points={
         'girder.plugin': [
             'renalpath = renalpath:GirderPlugin'
