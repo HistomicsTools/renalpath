@@ -27,10 +27,16 @@ const ElementDataPanel = Panel.extend({
         if (!elements.length) {
             this.$el.addClass('hidden');
         } else {
+            // Use the copy of plotly bundled with HistomicsUI
+            let root = '/static/built';
+            try {
+                root = __webpack_public_path__ || root; // eslint-disable-line
+            } catch (err) { }
+            root = root.replace(/\/$/, '');
             $.when(
                 !window.Plotly
                     ? $.ajax({ // like $.getScript, but allow caching
-                        url: 'https://unpkg.com/plotly.js-dist@latest/plotly.min.js',
+                        url: root + '/plugins/histomicsui/extra/plotly.js',
                         dataType: 'script',
                         cache: true
                     })
@@ -45,16 +51,17 @@ const ElementDataPanel = Panel.extend({
                     formatNumber: this._formatNumber
                 }));
                 this.$el.removeClass('hidden');
-                this.lastPlotData = this.getPlotData(this.plotConfig, average.average);
-                this.$el.find('#cell-types').toggleClass('hidden', !this.lastPlotData);
                 const elem = this.$el.find('.h-metadata-plot-area');
+                this.lastPlotData = this.getPlotData(this.plotConfig, average.average, elem.width());
+                this.$el.find('#cell-types').toggleClass('hidden', !this.lastPlotData);
                 if (this.lastPlotData) {
                     const plotOptions = {
                         margin: { t: 0, l: 40, r: 0, b: 20 },
                         hovermode: 'closest',
                         paper_bgcolor: 'transparent',
                         plot_bgcolor: 'transparent',
-                        height: 200
+                        height: 200,
+                        legend: { font: { size: this.legendFontSize } }
                     };
                     window.Plotly.newPlot(elem[0], this.lastPlotData, plotOptions);
                 }
@@ -145,15 +152,56 @@ const ElementDataPanel = Panel.extend({
         }
         return this._averageElementsRecurse(elements.models.map((e) => e.get('user')));
     },
-    getPlotData: function (plotConfig, average) {
+    legendFontSize: 11,
+    /**
+     * Wrap a label so that no line is longer than a maximum number of
+     * characters, breaking at spaces where possible.
+     *
+     * @param {string} label The label to wrap.
+     * @param {number} maxChars The maximum characters per line.
+     * @returns {string} The label with <br> between lines.
+     */
+    _wrapLabel: function (label, maxChars) {
+        const lines = [];
+        let line = '';
+        label.split(/\s+/).forEach((word) => {
+            if (line && line.length + 1 + word.length > maxChars) {
+                lines.push(line);
+                line = word;
+            } else {
+                line = line ? line + ' ' + word : word;
+            }
+        });
+        if (line) {
+            lines.push(line);
+        }
+        return lines.join('<br>');
+    },
+    /**
+     * Get the data for the cell type pie chart.
+     *
+     * @param {object} plotConfig The plot configuration.
+     * @param {object} average The averaged element user data.
+     * @param {number} [width] The width of the plot area in pixels.  If
+     *   specified, legend labels are wrapped so that the legend takes no
+     *   more than roughly half of this width.
+     * @returns {array|undefined} Plotly data or undefined if there is no cell
+     *   type data.
+     */
+    getPlotData: function (plotConfig, average, width) {
         if (!average || !average.Main_Cell_Types) {
             return;
         }
         const ctypes = average.Main_Cell_Types;
         const keys = Object.keys(ctypes).filter((key) => ctypes[key]).sort((a, b) => ctypes[b] - ctypes[a]);
+        // Reserve room for the legend symbol and padding, then estimate an
+        // average character width from the font size.
+        const maxChars = width ? Math.max(8, Math.floor((width / 2 - 40) / (this.legendFontSize * 0.55))) : 0;
         var data = [{
             values: keys.map((key) => +ctypes[key]),
-            labels: keys,
+            labels: maxChars ? keys.map((key) => this._wrapLabel(key, maxChars)) : keys,
+            customdata: keys,
+            hovertemplate: '%{customdata}: %{percent}<extra></extra>',
             type: 'pie',
             marker: {
                 colors: ['#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99', '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99', '#b15928'] // colorBrewerPaired12
@@ -162,7 +210,6 @@ const ElementDataPanel = Panel.extend({
                 row: 0,
                 column: 0
             },
-            hoverinfo: 'label+percent',
             textinfo: 'none'
         }];
         return data;
