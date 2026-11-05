@@ -92,8 +92,8 @@ var CellTypes = {
     },
     EC: {
         full: 'Endothelial Cell',
-        subtypes: ['EC', 'EC-GC', 'EC-AEA', 'EC-DVR', 'EC-PTC', 'dEC-PTC', 'EC-AVR', 'dEC', 'cycEC', 'EC-LYM'],
-        states: ['reference', 'reference', 'reference', 'reference', 'reference', 'degenerative', 'reference', 'degenerative', 'cycling', 'reference'],
+        subtypes: ['EC', 'EC-GC', 'EC-AEA', 'EC-DVR', 'EC-PTC', 'dEC-PTC', 'EC-AVR', 'dEC', 'cycEC', 'EC-LYM', 'aEC-GC'],
+        states: ['reference', 'reference', 'reference', 'reference', 'reference', 'degenerative', 'reference', 'degenerative', 'cycling', 'reference', 'altered'],
         structure: ['Various'],
         class: ['Endothelial'],
         color_code: ['239,241,241']
@@ -116,8 +116,8 @@ var CellTypes = {
     },
     IMM: {
         full: 'Immune Cell',
-        subtypes: ['IMM', 'B', 'PL', 'T', 'NKT', 'MAST', 'MAC-M2', 'cycMNP', 'MDC', 'cDC', 'pDC', 'ncMON', 'N', 'cycMAC'],
-        states: ['reference', 'reference', 'reference', 'reference', 'reference', 'reference', 'reference', 'cycling', 'reference', 'reference', 'reference', 'reference', 'reference', 'cycling'],
+        subtypes: ['IMM', 'B', 'PL', 'T', 'NKT', 'MAST', 'MAC-M2', 'cycMNP', 'MDC', 'cDC', 'pDC', 'ncMON', 'N', 'cycMAC', 'NK', 'mDC', 'CD8+ TEM/TEMRA', 'cycT', 'resMAC-HLAIIhi', 'moFAM', 'moMAC-INF'],
+        states: ['reference', 'reference', 'reference', 'reference', 'reference', 'reference', 'reference', 'cycling', 'reference', 'reference', 'reference', 'reference', 'reference', 'cycling', 'reference', 'reference', 'reference', 'cycling', 'reference', 'altered', 'altered'],
         structure: ['Interstitium'],
         class: ['Immune'],
         color_code: ['217,217,217', '229,229,227']
@@ -138,27 +138,67 @@ Object.entries(CellTypes).forEach(([key, value]) => {
     });
 });
 const UnknownTypes = {};
+/* Subtype name prefixes that indicate a cell state.  A subtype that isn't in
+ * the lookup table but is a known subtype with one of these prefixes is
+ * treated as the base subtype in the indicated state. */
+const StatePrefixes = { cyc: 'cycling', d: 'degenerative', a: 'altered', t: 'transitioning' };
 
+/**
+ * Look up a subtype, returning its main cell type and state.
+ *
+ * @param {string} key The subtype name.
+ * @param {boolean} [noPrefix] If true, don't check state prefixes.
+ * @returns {object|undefined} An object with main and state, or undefined.
+ */
+function lookupSubtype(key, noPrefix) {
+    var info = CellTypeLookup[key];
+    if (!info && key.indexOf('-') > 0) {
+        const newkey = key.substring(0, key.indexOf('-'));
+        info = CellTypeLookup[newkey];
+    }
+    if (!info && key.indexOf('-') > 0 && key.indexOf('-', key.indexOf('-') + 1) > 0) {
+        const newkey = key.substring(key.indexOf('-') + 1, key.indexOf('-', key.indexOf('-') + 1));
+        info = CellTypeLookup[newkey];
+    }
+    if (!info && !noPrefix) {
+        Object.entries(StatePrefixes).some(([prefix, state]) => {
+            if (key.length > prefix.length && key.startsWith(prefix)) {
+                const base = lookupSubtype(key.substring(prefix.length), true);
+                if (base) {
+                    info = { main: base.main, state: state };
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+    return info;
+}
+
+/**
+ * Given the user record of an element, populate Main_Cell_Types and
+ * Cell_States from L3 SubTypes.  If Main_Cell_Types is already present, it is
+ * left as is and Cell_States is keyed by its names rather than the main cell
+ * type names from the lookup table.
+ *
+ * @param {object} user The user record; modified in place.
+ */
 function convertCellTypes(user) {
     const topkey = 'Main_Cell_Types';
     const subkey = 'Cell_States';
     const l3key = 'L3 SubTypes';
 
-    if (user[topkey] || !user[l3key]) {
+    if (user[subkey] || !user[l3key]) {
         return;
     }
-    user[topkey] = {};
+    const hasMain = !!user[topkey];
+    const mainKeys = hasMain ? Object.keys(user[topkey]).filter((key) => user[topkey][key]) : [];
+    if (!hasMain) {
+        user[topkey] = {};
+    }
     user[subkey] = {};
     Object.entries(user[l3key]).forEach(([key, value]) => {
-        var info = CellTypeLookup[key];
-        if (!info && key.indexOf('-') > 0) {
-            const newkey = key.substring(0, key.indexOf('-'));
-            info = CellTypeLookup[newkey];
-        }
-        if (!info && key.indexOf('-') > 0 && key.indexOf('-', key.indexOf('-') + 1) > 0) {
-            const newkey = key.substring(key.indexOf('-') + 1, key.indexOf('-', key.indexOf('-') + 1));
-            info = CellTypeLookup[newkey];
-        }
+        const info = lookupSubtype(key);
         if (!info) {
             if (value && key !== 'max') {
                 UnknownTypes[key] = true;
@@ -166,17 +206,29 @@ function convertCellTypes(user) {
             }
             return;
         }
-        if (!user[subkey][info.main]) {
-            user[subkey][info.main] = {};
+        let main = info.main;
+        if (hasMain) {
+            if (user[topkey][main] === undefined) {
+                if (mainKeys.length !== 1) {
+                    return;
+                }
+                main = mainKeys[0];
+            }
+        } else {
+            user[topkey][main] = (user[topkey][main] || 0) + value;
         }
-        user[topkey][info.main] = (user[topkey][info.main] || 0) + value;
-        user[subkey][info.main][info.state] = (user[subkey][info.main][info.state] || 0) + value;
+        if (!user[subkey][main]) {
+            user[subkey][main] = {};
+        }
+        user[subkey][main][info.state] = (user[subkey][main][info.state] || 0) + value;
     });
-    const total = Object.values(user[topkey]).reduce((sum, value) => sum + value, 0);
-    if (total && total !== 1) {
-        Object.keys(user[topkey]).forEach((key) => {
-            user[topkey][key] /= total;
-        });
+    if (!hasMain) {
+        const total = Object.values(user[topkey]).reduce((sum, value) => sum + value, 0);
+        if (total && total !== 1) {
+            Object.keys(user[topkey]).forEach((key) => {
+                user[topkey][key] /= total;
+            });
+        }
     }
     Object.values(user[subkey]).forEach((states) => {
         const total = Object.values(states).reduce((sum, value) => sum + value, 0);
